@@ -1,6 +1,5 @@
 // combine-components.js
-// A utility script to combine all HTML components into a single file for deployment
-// and copy all necessary JavaScript files
+// A utility script to combine all HTML components and JavaScript into a single file for deployment
 // Usage: node combine-components.js
 
 const fs = require('fs');
@@ -12,14 +11,10 @@ const outputPath = path.join(__dirname, '..', 'dist', 'index-combined.html');
 const componentsDir = path.join(__dirname, '..', 'components');
 const jsDir = path.join(__dirname, '..', 'js');
 const distDir = path.join(__dirname, '..', 'dist');
-const distJsDir = path.join(distDir, 'js');
 
-// Ensure the dist and dist/js directories exist
+// Ensure the dist directory exists
 if (!fs.existsSync(distDir)) {
   fs.mkdirSync(distDir, { recursive: true });
-}
-if (!fs.existsSync(distJsDir)) {
-  fs.mkdirSync(distJsDir, { recursive: true });
 }
 
 // Read the index file
@@ -70,62 +65,140 @@ while ((match = componentRegex.exec(indexContent)) !== null) {
   }
 }
 
+// Function to read all JavaScript files
+function readJsFile(filePath) {
+  try {
+    const fullPath = path.resolve(path.join(__dirname, '..', filePath));
+    return fs.readFileSync(fullPath, 'utf8');
+  } catch (error) {
+    console.error(`Error reading JS file ${filePath}:`, error);
+    return `/* Error loading ${filePath} */`;
+  }
+}
+
+// Recursively read JS file and its imports
+function processJsModule(filePath, processedFiles = new Set()) {
+  if (processedFiles.has(filePath)) {
+    return ''; // Already processed this file
+  }
+  
+  processedFiles.add(filePath);
+  let content = readJsFile(filePath);
+  
+  // Find and process imports
+  const importRegex = /import\s+.*\s+from\s+['"](.+?)['"]/g;
+  let importMatch;
+  let processedImports = '';
+  
+  while ((importMatch = importRegex.exec(content)) !== null) {
+    const importPath = importMatch[1];
+    
+    // Only process local imports (not npm packages)
+    if (!importPath.startsWith('.')) continue;
+    
+    // Resolve relative path
+    const resolvedPath = path.resolve(path.dirname(filePath), importPath);
+    const relativePath = path.relative(path.join(__dirname, '..'), resolvedPath);
+    
+    // Add .js extension if needed
+    const importFilePath = relativePath.endsWith('.js') ? relativePath : `${relativePath}.js`;
+    
+    // Process this import
+    processedImports += processJsModule(importFilePath, processedFiles);
+    
+    // Remove this import statement as we're inlining it
+    content = content.replace(importMatch[0], '// Import inlined: ' + importMatch[0]);
+  }
+  
+  return `
+/* File: ${filePath} */
+${processedImports}
+${content}
+`;
+}
+
+// Find all script tags with src attributes referencing local files
+const scriptRegex = /<script[^>]*src=["']([^"']*?)["'][^>]*><\/script>/g;
+let scriptMatch;
+let jsContent = '';
+
+// First pass to collect all scripts
+while ((scriptMatch = scriptRegex.exec(indexContent)) !== null) {
+  const src = scriptMatch[1];
+  
+  // Only process local scripts, not CDN references
+  if (src.startsWith('js/')) {
+    const scriptType = scriptMatch[0].includes('type="module"') ? 'module' : 'regular';
+    
+    // For module scripts, we need to process imports
+    if (scriptType === 'module') {
+      jsContent += processJsModule(src);
+    } else {
+      // For regular scripts, just include the content
+      jsContent += `\n/* File: ${src} */\n${readJsFile(src)}\n`;
+    }
+    
+    // Remove the script tag since we're inlining it
+    indexContent = indexContent.replace(
+      scriptMatch[0],
+      `<!-- Script inlined: ${src} -->`
+    );
+  }
+}
+
 // Remove the component loader script since we don't need it anymore
 indexContent = indexContent.replace(
   /<script src="js\/components-loader\.js"><\/script>/,
   '<!-- Component loader removed in combined version -->'
 );
 
-// Add any inline scripts we collected from components right before the closing body tag
-if (inlineScripts) {
-  indexContent = indexContent.replace(
-    '</body>',
-    `<!-- Consolidated inline scripts from components -->\n${inlineScripts}\n</body>`
-  );
+// Create a single inlined script tag for all JS content
+const inlinedScriptTag = `
+<!-- All JavaScript inlined below -->
+<script>
+${jsContent}
+
+// Initialize the application manually since we removed the module script tags
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof initApplication === 'function') {
+    initApplication();
+  }
+});
+</script>
+`;
+
+// Add the consolidated scripts before the closing body tag
+indexContent = indexContent.replace(
+  '</body>',
+  `${inlinedScriptTag}\n${inlineScripts ? '<!-- Consolidated inline scripts from components -->\n' + inlineScripts + '\n' : ''}</body>`
+);
+
+// Inline CSS files
+const cssLinkRegex = /<link[^>]*rel=["']stylesheet["'][^>]*href=["']([^"']*?)["'][^>]*>/g;
+let cssMatch;
+
+while ((cssMatch = cssLinkRegex.exec(indexContent)) !== null) {
+  const href = cssMatch[1];
+  
+  // Only process local CSS files, not CDN references
+  if (href.startsWith('css/')) {
+    try {
+      const cssPath = path.join(__dirname, '..', href);
+      const cssContent = fs.readFileSync(cssPath, 'utf8');
+      
+      // Replace the link tag with an inline style tag
+      indexContent = indexContent.replace(
+        cssMatch[0],
+        `<!-- CSS inlined from ${href} -->\n<style>\n${cssContent}\n</style>`
+      );
+      
+      console.log(`Inlined CSS file: ${href}`);
+    } catch (error) {
+      console.error(`Error reading CSS file ${href}:`, error);
+    }
+  }
 }
 
 // Write the combined file
 fs.writeFileSync(outputPath, indexContent);
-console.log(`Combined HTML file created at: ${outputPath}`);
-
-// Copy all JavaScript files to dist directory
-function copyJSFilesRecursively(sourceDir, targetDir) {
-  if (!fs.existsSync(targetDir)) {
-    fs.mkdirSync(targetDir, { recursive: true });
-  }
-  
-  const items = fs.readdirSync(sourceDir);
-  
-  items.forEach(item => {
-    const sourcePath = path.join(sourceDir, item);
-    const targetPath = path.join(targetDir, item);
-    
-    if (fs.statSync(sourcePath).isDirectory()) {
-      copyJSFilesRecursively(sourcePath, targetPath);
-    } else if (item.endsWith('.js') && item !== 'components-loader.js') {
-      fs.copyFileSync(sourcePath, targetPath);
-      console.log(`Copied JS file: ${sourcePath} -> ${targetPath}`);
-    }
-  });
-}
-
-// Copy JS files
-copyJSFilesRecursively(jsDir, distJsDir);
-
-// Also copy CSS directory if it exists
-const cssDir = path.join(__dirname, '..', 'css');
-const distCssDir = path.join(distDir, 'css');
-if (fs.existsSync(cssDir)) {
-  if (!fs.existsSync(distCssDir)) {
-    fs.mkdirSync(distCssDir, { recursive: true });
-  }
-  
-  fs.readdirSync(cssDir).forEach(file => {
-    if (file.endsWith('.css')) {
-      fs.copyFileSync(path.join(cssDir, file), path.join(distCssDir, file));
-      console.log(`Copied CSS file: ${file}`);
-    }
-  });
-}
-
-console.log(`All JavaScript and CSS files copied to dist directory`);
+console.log(`Combined HTML file with inlined JS/CSS created at: ${outputPath}`);

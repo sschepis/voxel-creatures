@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Component Loader Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .component-container {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: white;
+    }
+    h1 {
+      color: #333;
+    }
+    .status {
+      margin-top: 30px;
+      padding: 10px;
+      background-color: #e9f7ef;
+      border-radius: 5px;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>Component Loader Test</h1>
+  <p>This page tests if the component loading system works correctly.</p>
+  
+  <div class="component-container">
+    <h2>Header Component</h2>
+    <div data-component="components/header.html"></div>
+  </div>
+  
+  <div class="component-container">
+    <h2>Controls Component</h2>
+    <div data-component="components/controls.html"></div>
+  </div>
+  
+  <div class="status" id="status">
+    <h3>Loading Status:</h3>
+    <div id="load-status">Waiting for components to load...</div>
+    <div id="component-count"></div>
+  </div>
+  
+  <button id="reload-btn">Reload Components</button>
+
+  <script src="js/components-loader.js"></script>
+  <script>
+    // Listen for when all components have been loaded
+    document.addEventListener('components-loaded', function() {
+      document.getElementById('load-status').textContent = 'All components loaded successfully!';
+      document.getElementById('load-status').style.color = 'green';
+      
+      // Count the components that were loaded
+      const componentPlaceholders = document.querySelectorAll('[data-component]');
+      document.getElementById('component-count').textContent = 
+        `${componentPlaceholders.length} components were processed.`;
+    });
+    
+    // Reload button functionality
+    document.getElementById('reload-btn').addEventListener('click', function() {
+      document.getElementById('load-status').textContent = 'Reloading components...';
+      document.getElementById('load-status').style.color = 'orange';
+      
+      // Clear existing components
+      const componentPlaceholders = document.querySelectorAll('[data-component]');
+      componentPlaceholders.forEach(placeholder => {
+        placeholder.innerHTML = '';
+      });
+      
+      // Reload components
+      setTimeout(() => {
+        // Re-trigger component loading by simulating page load
+        const event = new Event('DOMContentLoaded');
+        document.dispatchEvent(event);
+      }, 500);
+    });
+  </script>
+</body>
+</html>

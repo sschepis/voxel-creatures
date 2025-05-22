@@ -1,143 +1,100 @@
-# Voxel Creatures Battle Game - Source Code Structure
+# Voxel Creatures Evolutionary Simulator - File Structure
 
-## Core Framework
-- `index.html` - Main entry point for the application
-- `app.js` - Application initialization and setup
+## Main Files
+- `index.html` - Main entry point that loads components dynamically
+- `README.md` - Project documentation and overview
+- `DESIGN.md` - Design decisions and architecture documentation
+- `TODO.md` - Planned improvements and future features
 
-## Configuration
-- `config/game-config.js` - Global game settings and constants
-- `config/battle-config.js` - Battle-specific settings
-- `config/evolution-config.js` - Evolution parameters and genetics settings
-- `config/environment-config.js` - Settings for different battle arenas
+## Component Files
+The UI is broken down into reusable HTML components:
 
-## Engines
+- `components/head.html` - Contains the document head content, metadata, and CSS imports
+- `components/header.html` - Page header with title and description
+- `components/controls.html` - Simulation control panel with settings
+- `components/viewer.html` - 3D simulation viewer and creature control interface
+- `components/population.html` - Population grid for viewing and selecting creatures
+- `components/stats.html` - Statistics and genetics panels with charts
+- `components/footer.html` - Page footer with keyboard shortcuts
+- `components/scripts.html` - External script dependencies
 
-### Evolution Engine
-- `engines/evolution/genetics.js` - Core genetic system implementation
-- `engines/evolution/mutation.js` - Mutation system and algorithms
-- `engines/evolution/breeding.js` - Creature breeding mechanics
-- `engines/evolution/traits.js` - Trait definitions and effects
-- `engines/evolution/species.js` - Species classification and tracking
+## JavaScript Files
 
-### Physics Engine
-- `engines/physics/world.js` - Physics world setup and management
-- `engines/physics/creature-physics.js` - Creature-specific physics
-- `engines/physics/collision.js` - Collision detection and handling
-- `engines/physics/movement.js` - Movement and forces implementation
+### Core System
+- `js/main.js` - Application initialization and setup
+- `js/components-loader.js` - Client-side component loading system
+- `js/simulation.js` - Core simulation logic and physics world management
+- `js/ui.js` - User interface interaction handling
+- `js/utils.js` - Utility functions and helpers
 
-### Battle Engine
-- `engines/battle/battle-manager.js` - Battle initialization and state management
-- `engines/battle/turn-system.js` - Turn sequence handling
-- `engines/battle/action-resolver.js` - Action execution and results
-- `engines/battle/damage-calculator.js` - Damage calculation system
-- `engines/battle/environment-effects.js` - Environmental interactions
-- `engines/battle/ability-system.js` - Special ability implementation
+### Entity Models
+- `js/entities/VoxelCreature.js` - Creature entity with genetics, physics, and behaviors
+- `js/entities/Food.js` - Food resource entity that creatures consume
 
-## Models
+## Stylesheets
+- `css/style.css` - Main application styles
 
-### Creature Models
-- `models/creature/creature.js` - Base creature class
-- `models/creature/body-parts.js` - Body part definitions and functions
-- `models/creature/stats.js` - Creature statistics and attributes
-- `models/creature/abilities.js` - Ability definitions and effects
-- `models/creature/creature-factory.js` - Creature creation and initialization
+## File Descriptions
 
-### Battle Models
-- `models/battle/battle-state.js` - Battle state representation
-- `models/battle/battle-action.js` - Action definitions and validation
-- `models/battle/arena.js` - Arena representation and properties
-- `models/battle/battle-result.js` - Battle outcome tracking
+### Core Files
 
-### Player Models
-- `models/player/player.js` - Player profile and data
-- `models/player/inventory.js` - Creature collection management
-- `models/player/progress.js` - Player progression tracking
-- `models/player/achievements.js` - Achievement system
+#### index.html
+The main HTML file that uses component placeholders with `data-component` attributes. These are replaced with actual component content by the component loader system.
 
-## Services
+#### js/components-loader.js
+A client-side component loader that:
+- Identifies all elements with `data-component` attributes
+- Fetches the HTML content from the specified files
+- Injects the content into the placeholders
+- Dispatches events when components are loaded
 
-### Database Services
-- `services/gun/gun-setup.js` - Gun.js initialization and configuration
-- `services/gun/creature-storage.js` - Creature data persistence
-- `services/gun/battle-records.js` - Battle history storage
-- `services/gun/user-profiles.js` - User data management
-- `services/gun/synchronization.js` - Real-time data synchronization
+#### js/main.js
+The application entry point that:
+- Initializes the Vanta.js background effect
+- Waits for components to load
+- Creates the simulation instance
+- Sets up the UI
+- Initializes creatures and environment
+- Starts the animation loop
 
-### Game Services
-- `services/game/authentication.js` - User authentication and sessions
-- `services/game/matchmaking.js` - Battle matchmaking system
-- `services/game/trading.js` - Creature trading functionality
-- `services/game/event-system.js` - Game events and notifications
-- `services/game/leaderboard.js` - Rankings and leaderboards
+#### js/simulation.js
+The core simulation class that:
+- Manages the physics world (Cannon.js)
+- Creates and updates creatures
+- Handles food spawning and consumption
+- Processes creature collisions
+- Manages environmental factors
+- Implements the genetic algorithm
+- Handles generational advancement
+- Tracks fitness and evolutionary progress
 
-## Views
+#### js/ui.js
+Handles all user interface interactions:
+- Connects UI controls to simulation parameters
+- Updates statistics displays
+- Manages creature selection
+- Handles button clicks
+- Renders the population grid
+- Updates the lineage chart
 
-### UI Components
-- `views/components/creature-card.js` - Reusable creature display component
-- `views/components/stat-display.js` - Statistics visualization component
-- `views/components/action-button.js` - Interactive button component
-- `views/components/progress-bar.js` - Progress visualization component
-- `views/components/genetic-chart.js` - Genetic visualization component
+### Entity Files
 
-### Screens
-- `views/screens/home-screen.js` - Main menu interface
-- `views/screens/evolution-lab.js` - Creature breeding and mutation interface
-- `views/screens/battle-arena.js` - Battle interface and controls
-- `views/screens/creature-collection.js` - Creature management interface
-- `views/screens/training-grounds.js` - Creature training interface
-- `views/screens/marketplace.js` - Trading interface
-- `views/screens/profile.js` - Player profile interface
-- `views/screens/leaderboard.js` - Rankings display
-- `views/screens/settings.js` - Game settings interface
+#### js/entities/VoxelCreature.js
+The creature model with:
+- Genetic traits and inheritance
+- Physical body with joints and constraints
+- Visual representation with Three.js
+- Movement and decision-making logic
+- Collision detection
+- Fitness calculation
+- Breeding and mutation mechanisms
+- Environmental adaptation
 
-### Rendering
-- `views/rendering/scene-manager.js` - 3D scene management
-- `views/rendering/creature-renderer.js` - Creature visualization
-- `views/rendering/environment-renderer.js` - Battle arena rendering
-- `views/rendering/animation-system.js` - Animation management
-- `views/rendering/effects-renderer.js` - Special effects rendering
-- `views/rendering/camera-controller.js` - Camera control system
+#### js/entities/Food.js
+The food resource model with:
+- Physical properties
+- Visual representation
+- Energy content
+- Spawn and consumption logic
 
-## Controllers
-
-### Game Controllers
-- `controllers/game-controller.js` - Main game loop and state management
-- `controllers/evolution-controller.js` - Evolution process control
-- `controllers/battle-controller.js` - Battle sequence control
-- `controllers/training-controller.js` - Training simulation control
-- `controllers/collection-controller.js` - Creature collection management
-
-### Input Controllers
-- `controllers/input/keyboard-input.js` - Keyboard controls handling
-- `controllers/input/mouse-input.js` - Mouse interaction handling
-- `controllers/input/touch-input.js` - Touch controls for mobile
-- `controllers/input/input-mapper.js` - Input mapping system
-
-## Utilities
-- `utils/math-utils.js` - Mathematical helper functions
-- `utils/random-utils.js` - Random generation utilities
-- `utils/object-pool.js` - Object pooling for performance
-- `utils/event-bus.js` - Event system for component communication
-- `utils/logger.js` - Logging and debugging utilities
-
-## Assets
-- `assets/models/` - 3D model files
-- `assets/textures/` - Texture files
-- `assets/sounds/` - Audio files
-- `assets/environments/` - Environment assets
-- `assets/ui/` - User interface assets
-
-## Tests
-- `tests/unit/` - Unit tests for individual components
-- `tests/integration/` - Integration tests for system interaction
-- `tests/e2e/` - End-to-end tests for complete features
-- `tests/performance/` - Performance benchmarking tests
-
-## Documentation
-- `docs/api.md` - API documentation
-- `docs/architecture.md` - Architecture overview
-- `docs/genetics.md` - Genetic system documentation
-- `docs/battle-system.md` - Battle mechanics documentation
-- `docs/gun-integration.md` - Gun.js implementation details
-
-This file structure provides a well-organized, modular approach to implementing the Voxel Creatures Battle Game, with clear separation of concerns and maintainable code organization.
+This file structure provides a clean separation of concerns between the simulation logic, entity models, and user interface components, making the codebase more maintainable and extensible.
